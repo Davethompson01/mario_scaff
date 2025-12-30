@@ -81,73 +81,24 @@ const GameSandbox = () => {
     if (!containerRef.current || startedRef.current) return;
     startedRef.current = true;
 
-    // Shared input state for keyboard + touch
-    let inputDir = 0; // -1 = left, 1 = right
-    let playerRef: any = null;
-
-    // Basic swipe handling for touch devices
     const el = containerRef.current;
-    let activeTouchId: number | null = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    const SWIPE_THRESHOLD = 24; // px
 
-    const getTouchById = (e: TouchEvent, id: number | null) => {
-      if (id === null) return null;
-      for (let i = 0; i < e.changedTouches.length; i += 1) {
-        const t = e.changedTouches.item(i);
-        if (t && t.identifier === id) return t;
-      }
-      return null;
-    };
+    // 🔑 Make container focusable & capture arrow keys
+    el.tabIndex = 0;
+    el.focus();
 
-    const handleTouchStart = (e: TouchEvent) => {
-      if (activeTouchId !== null) return;
-      const t = e.changedTouches[0];
-      if (!t) return;
-      activeTouchId = t.identifier;
-      touchStartX = t.clientX;
-      touchStartY = t.clientY;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      const t = getTouchById(e, activeTouchId);
-      if (!t) return;
-      const dx = t.clientX - touchStartX;
-      const dy = t.clientY - touchStartY;
-
-      // Horizontal swipe → move left / right
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_THRESHOLD) {
-        inputDir = dx > 0 ? 1 : -1;
-      }
-
-      // Upward swipe → jump
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (
-        Math.abs(dy) > Math.abs(dx) &&
-        -dy > SWIPE_THRESHOLD &&
-        playerRef &&
-        typeof playerRef.grounded === "function" &&
-        playerRef.grounded()
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
       ) {
-        playerRef.jump(CURRENT_JUMP_FORCE);
-        // Reset so a single swipe doesn't trigger multiple jumps
-        touchStartY = t.clientY;
+        e.preventDefault();
       }
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      const t = getTouchById(e, activeTouchId);
-      if (!t) return;
-      activeTouchId = null;
-      inputDir = 0;
-    };
+    el.addEventListener("keydown", handleKeyDown);
 
-    if (el) {
-      el.addEventListener("touchstart", handleTouchStart, { passive: true });
-      el.addEventListener("touchmove", handleTouchMove, { passive: true });
-      el.addEventListener("touchend", handleTouchEnd, { passive: true });
-      el.addEventListener("touchcancel", handleTouchEnd, { passive: true });
-    }
+    // Store keyup handler reference for cleanup
+    let keyUpHandler: ((e: KeyboardEvent) => void) | null = null;
 
     // @ts-ignore – provided by CDN
     kaboom({
@@ -203,31 +154,92 @@ const GameSandbox = () => {
       layers(["bg", "obj", "ui"], "obj");
 
       const maps = [
+        // =========================
+        // MAP 1 – Tutorial / Easy Start
+        // =========================
+        // Simple horizontal progression with coins and one enemy
         [
           "                                      ",
           "                                      ",
           "                                      ",
           "                                      ",
           "                                      ",
-          "     %   =*=%=                        ",
+          "        $    $    $                   ",
           "                                      ",
-          "                            -+        ",
-          "                    ^   ^   ()        ",
-          "==============================   =====",
+          "                          -+          ",
+          "            ^       ^                  ",
+          "======================================",
         ],
+      
+        // =========================
+        // MAP 2 – Platforms Introduced
+        // =========================
+        // Introduces jumping mechanics with platforms
         [
-          "£                                       £",
-          "£                                       £",
-          "£                                       £",
-          "£                                       £",
-          "£                                       £",
-          "£        @@@@@@              x x        £",
-          "£                          x x x        £",
-          "£                        x x x x  x   -+£",
-          "£               z   z  x x x x x  x   ()£",
-          "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+          "                                      ",
+          "                                      ",
+          "         *     *                      ",
+          "                                      ",
+          "     %====%            $              ",
+          "                                      ",
+          "        ===              ===          ",
+          "                    =*=%              ",
+          "                ^   ^        -+      ",
+          "======================================",
+        ],
+      
+        // =========================
+        // MAP 3 – Enemies & Challenges
+        // =========================
+        // More enemies, more coins, requires strategy
+        [
+          "£                                      £",
+          "£                                      £",
+          "£        *         *         $         £",
+          "£                                      £",
+          "£     %====%        z     %====%       £",
+          "£                                      £",
+          "£        ===              ===          £",
+          "£                     x x        -+   £",
+          "£            z   z  x x x x   ^   ()   £",
+          "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        ],
+      
+        // =========================
+        // MAP 4 – Vertical Challenge
+        // =========================
+        // Vertical platforming with multiple paths
+        [
+          "£      *                               £",
+          "£          %===%        $             £",
+          "£                    *                £",
+          "£       z        %===%                £",
+          "£          ===        ===              £",
+          "£              x x x                   £",
+          "£           x x x x x                  £",
+          "£        x x x x x x         -+        £",
+          "£    z   x x x x x x   ^ ^   ()        £",
+          "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+        ],
+      
+        // =========================
+        // MAP 5 – Final Challenge
+        // =========================
+        // Hardest level with all mechanics combined
+        [
+          "£    *        *        *        $      £",
+          "£        %====%        %====%         £",
+          "£          ===            ===         £",
+          "£    z        x x x x        z         £",
+          "£              x x x                   £",
+          "£    %====%              %====%       £",
+          "£          ===            ===         £",
+          "£       x x x x x x         -+        £",
+          "£   z   x x x x x x   ^ ^   ()        £",
+          "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
         ],
       ];
+      
 
       const levelCfg: any = {
         // Slightly smaller tiles so more world fits on screen
@@ -297,8 +309,6 @@ const GameSandbox = () => {
           big(),
           originFn("bot"),
         ]);
-        // Expose to touch handlers
-        playerRef = player;
 
         action("mushroom", (m: any) => m.move(20, 0));
         action("dangerous", (d: any) => d.move(-ENEMY_SPEED, 0));
@@ -332,32 +342,110 @@ const GameSandbox = () => {
           isJumping ? destroy(d) : go("lose", { score: scoreLabel.value });
         });
 
-        player.action(() => {
-          // Keyboard: original left/right key handling
-          // Touch: continuous movement based on swipe direction
-          if (inputDir !== 0) {
-            player.move(inputDir * MOVE_SPEED, 0);
-          }
+        // Track keyboard input state
+        let moveDir = 0;
+        let keyLeft = false;
+        let keyRight = false;
+        let keyA = false;
+        let keyD = false;
 
-          // Camera follows player; a bit ahead in x to see incoming obstacles
+        // Arrow key controls for PC
+        keyDown("left", () => {
+          keyLeft = true;
+          moveDir = -1;
+        });
+        keyDown("right", () => {
+          keyRight = true;
+          moveDir = 1;
+        });
+        keyDown("a", () => {
+          keyA = true;
+          moveDir = -1;
+        });
+        keyDown("d", () => {
+          keyD = true;
+          moveDir = 1;
+        });
+
+        // Track key releases using window events (kaboom doesn't have keyUp)
+        const updateMoveDir = () => {
+          if (keyLeft || keyA) {
+            moveDir = -1;
+          } else if (keyRight || keyD) {
+            moveDir = 1;
+          } else {
+            moveDir = 0;
+          }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+          if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+            keyLeft = false;
+            keyA = false;
+            updateMoveDir();
+          }
+          if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+            keyRight = false;
+            keyD = false;
+            updateMoveDir();
+          }
+        };
+
+        keyUpHandler = handleKeyUp;
+        window.addEventListener("keyup", handleKeyUp);
+
+        // Jump controls
+        keyDown("up", () => {
+          if (player.grounded()) {
+            player.jump(CURRENT_JUMP_FORCE);
+          }
+        });
+        keyPress("space", () => {
+          if (player.grounded()) player.jump(CURRENT_JUMP_FORCE);
+        });
+
+        // Main player action
+        player.action(() => {
+          // Move based on keyboard input
+          if (moveDir !== 0) {
+            player.move(moveDir * MOVE_SPEED, 0);
+          }
+        
           camPos(player.pos.add(vec2(40, -10)));
           isJumping = !player.grounded();
+        
           if (player.pos.y >= FALL_DEATH) {
             go("lose", { score: scoreLabel.value });
           }
         });
 
+
+        // Pipe interaction - arrow down (fixed to work properly)
+        let isOnPipe = false;
+        let pipeEnterCooldown = 0;
+        
+        // Track when player is on pipe
         player.collides("pipe", () => {
-          keyPress("down", () =>
+          isOnPipe = true;
+        });
+        
+        // Single key handler that checks pipe state
+        keyPress("down", () => {
+          if (isOnPipe && pipeEnterCooldown <= 0) {
+            pipeEnterCooldown = 0.5; // Prevent multiple triggers
             go("game", {
               level: (level + 1) % maps.length,
               score: scoreLabel.value,
-            })
-          );
+            });
+          }
         });
-
-        keyPress("space", () => {
-          if (player.grounded()) player.jump(CURRENT_JUMP_FORCE);
+        
+        // Reset pipe flag and cooldown
+        player.action(() => {
+          isOnPipe = false; // Reset each frame, will be set if colliding
+          if (pipeEnterCooldown > 0) {
+            pipeEnterCooldown -= dt();
+          }
         });
       });
 
@@ -373,12 +461,12 @@ const GameSandbox = () => {
 
     start("game", { level: 0, score: 0 });
     return () => {
-      // Clean up touch listeners
+      // Clean up keyboard listeners
       if (el) {
-        el.removeEventListener("touchstart", handleTouchStart);
-        el.removeEventListener("touchmove", handleTouchMove);
-        el.removeEventListener("touchend", handleTouchEnd);
-        el.removeEventListener("touchcancel", handleTouchEnd);
+        el.removeEventListener("keydown", handleKeyDown);
+      }
+      if (keyUpHandler) {
+        window.removeEventListener("keyup", keyUpHandler);
       }
     };
   }, []);
