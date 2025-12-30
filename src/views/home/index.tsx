@@ -125,7 +125,7 @@ const GameSandbox = () => {
         // Left third - move left
         keyLeft = true;
         updateMoveDir();
-      } else if (x > 2 * width / 3) {
+      } else if (x > (2 * width) / 3) {
         // Right third - move right
         keyRight = true;
         updateMoveDir();
