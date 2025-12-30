@@ -1,6 +1,6 @@
 // Next, React
-import { FC, useState } from 'react';
-import pkg from '../../../package.json';
+import { FC, useState } from "react";
+import pkg from "../../../package.json";
 
 // ❌ DO NOT EDIT ANYTHING ABOVE THIS LINE
 
@@ -106,10 +106,7 @@ const GameSandbox = () => {
       width: containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
       // Slightly less zoom so we can see more of the level, especially on mobile
-      scale:
-        containerRef.current.clientWidth < 480
-          ? 1
-          : 1.5,
+      scale: containerRef.current.clientWidth < 480 ? 1 : 1.5,
       debug: true,
       clearColor: [0, 0, 0, 1],
       root: containerRef.current,
@@ -128,23 +125,23 @@ const GameSandbox = () => {
     /* ---------------- ASSETS ---------------- */
     loadSprite("coin", coin.src);
     loadSprite("evil-shroom", evilShroom.src);
-    loadSprite("brick", brick.src );
-    loadSprite("block", block.src );
-    loadSprite("mario", mario.src );
-    loadSprite("mushroom", mushroom.src );
-    loadSprite("surprise", surprise.src );
-    loadSprite("unboxed", unboxed.src );
+    loadSprite("brick", brick.src);
+    loadSprite("block", block.src);
+    loadSprite("mario", mario.src);
+    loadSprite("mushroom", mushroom.src);
+    loadSprite("surprise", surprise.src);
+    loadSprite("unboxed", unboxed.src);
 
-    loadSprite("pipe-top-left", pipeTopLeft.src );
-    loadSprite("pipe-top-right", pipeTopRight.src );
-    loadSprite("pipe-bottom-left", pipeBottomLeft.src );
-    loadSprite("pipe-bottom-right", pipeBottomRight.src );
+    loadSprite("pipe-top-left", pipeTopLeft.src);
+    loadSprite("pipe-top-right", pipeTopRight.src);
+    loadSprite("pipe-bottom-left", pipeBottomLeft.src);
+    loadSprite("pipe-bottom-right", pipeBottomRight.src);
 
-    loadSprite("blue-block", blueBlock.src );
-    loadSprite("blue-brick", blueBrick.src );
-    loadSprite("blue-steel", blueSteel.src );
-    loadSprite("blue-evil-shroom", blueEvilShroom.src );
-    loadSprite("blue-surprise", blueSuprise.src );
+    loadSprite("blue-block", blueBlock.src);
+    loadSprite("blue-brick", blueBrick.src);
+    loadSprite("blue-steel", blueSteel.src);
+    loadSprite("blue-evil-shroom", blueEvilShroom.src);
+    loadSprite("blue-surprise", blueSuprise.src);
 
     /* ---------------- SCENES ---------------- */
 
@@ -170,7 +167,7 @@ const GameSandbox = () => {
           "            ^       ^                  ",
           "======================================",
         ],
-      
+
         // =========================
         // MAP 2 – Platforms Introduced
         // =========================
@@ -187,7 +184,7 @@ const GameSandbox = () => {
           "                ^   ^        -+      ",
           "======================================",
         ],
-      
+
         // =========================
         // MAP 3 – Enemies & Challenges
         // =========================
@@ -204,7 +201,7 @@ const GameSandbox = () => {
           "£            z   z  x x x x   ^   ()   £",
           "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
         ],
-      
+
         // =========================
         // MAP 4 – Vertical Challenge
         // =========================
@@ -221,7 +218,7 @@ const GameSandbox = () => {
           "£    z   x x x x x x   ^ ^   ()        £",
           "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
         ],
-      
+
         // =========================
         // MAP 5 – Final Challenge
         // =========================
@@ -239,7 +236,6 @@ const GameSandbox = () => {
           "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
         ],
       ];
-      
 
       const levelCfg: any = {
         // Slightly smaller tiles so more world fits on screen
@@ -301,163 +297,178 @@ const GameSandbox = () => {
       }
 
       /* -------- PLAYER -------- */
-        const player: any = add([
-          sprite("mario"),
-          pos(30, 0),
-          solid(),
-          body(),
-          big(),
-          originFn("bot"),
-        ]);
+      const player: any = add([
+        sprite("mario"),
+        pos(30, 0),
+        solid(),
+        body(),
+        big(),
+        originFn("bot"),
+      ]);
 
-        action("mushroom", (m: any) => m.move(20, 0));
-        action("dangerous", (d: any) => d.move(-ENEMY_SPEED, 0));
+      action("mushroom", (m: any) => m.move(20, 0));
+      action("dangerous", (d: any) => d.move(-ENEMY_SPEED, 0));
 
-        player.on("headbump", (obj: any) => {
-          if (obj.is("coin-surprise")) {
-            gameLevel.spawn("$", obj.gridPos.sub(0, 1));
-            destroy(obj);
-            gameLevel.spawn("}", obj.gridPos);
-          }
+      player.on("headbump", (obj: any) => {
+        if (obj.is("coin-surprise")) {
+          gameLevel.spawn("$", obj.gridPos.sub(0, 1));
+          destroy(obj);
+          gameLevel.spawn("}", obj.gridPos);
+        }
 
-          if (obj.is("mushroom-surprise")) {
-            gameLevel.spawn("#", obj.gridPos.sub(0, 1));
-            destroy(obj);
-            gameLevel.spawn("}", obj.gridPos);
-          }
-        });
-
-        player.collides("coin", (c: any) => {
-          destroy(c);
-          scoreLabel.value++;
-          scoreLabel.text = scoreLabel.value;
-        });
-
-        player.collides("mushroom", (m: any) => {
-          destroy(m);
-          player.biggify(6);
-        });
-
-        player.collides("dangerous", (d: any) => {
-          isJumping ? destroy(d) : go("lose", { score: scoreLabel.value });
-        });
-
-        // Track keyboard input state
-        let moveDir = 0;
-        let keyLeft = false;
-        let keyRight = false;
-        let keyA = false;
-        let keyD = false;
-
-        // Arrow key controls for PC
-        keyDown("left", () => {
-          keyLeft = true;
-          moveDir = -1;
-        });
-        keyDown("right", () => {
-          keyRight = true;
-          moveDir = 1;
-        });
-        keyDown("a", () => {
-          keyA = true;
-          moveDir = -1;
-        });
-        keyDown("d", () => {
-          keyD = true;
-          moveDir = 1;
-        });
-
-        // Track key releases using window events (kaboom doesn't have keyUp)
-        const updateMoveDir = () => {
-          if (keyLeft || keyA) {
-            moveDir = -1;
-          } else if (keyRight || keyD) {
-            moveDir = 1;
-          } else {
-            moveDir = 0;
-          }
-        };
-
-        const handleKeyUp = (e: KeyboardEvent) => {
-          if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
-            keyLeft = false;
-            keyA = false;
-            updateMoveDir();
-          }
-          if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
-            keyRight = false;
-            keyD = false;
-            updateMoveDir();
-          }
-        };
-
-        keyUpHandler = handleKeyUp;
-        window.addEventListener("keyup", handleKeyUp);
-
-        // Jump controls
-        keyDown("up", () => {
-          if (player.grounded()) {
-            player.jump(CURRENT_JUMP_FORCE);
-          }
-        });
-        keyPress("space", () => {
-          if (player.grounded()) player.jump(CURRENT_JUMP_FORCE);
-        });
-
-        // Main player action
-        player.action(() => {
-          // Move based on keyboard input
-          if (moveDir !== 0) {
-            player.move(moveDir * MOVE_SPEED, 0);
-          }
-        
-          camPos(player.pos.add(vec2(40, -10)));
-          isJumping = !player.grounded();
-        
-          if (player.pos.y >= FALL_DEATH) {
-            go("lose", { score: scoreLabel.value });
-          }
-        });
-
-
-        // Pipe interaction - arrow down (fixed to work properly)
-        let isOnPipe = false;
-        let pipeEnterCooldown = 0;
-        
-        // Track when player is on pipe
-        player.collides("pipe", () => {
-          isOnPipe = true;
-        });
-        
-        // Single key handler that checks pipe state
-        keyPress("down", () => {
-          if (isOnPipe && pipeEnterCooldown <= 0) {
-            pipeEnterCooldown = 0.5; // Prevent multiple triggers
-            go("game", {
-              level: (level + 1) % maps.length,
-              score: scoreLabel.value,
-            });
-          }
-        });
-        
-        // Reset pipe flag and cooldown
-        player.action(() => {
-          isOnPipe = false; // Reset each frame, will be set if colliding
-          if (pipeEnterCooldown > 0) {
-            pipeEnterCooldown -= dt();
-          }
-        });
+        if (obj.is("mushroom-surprise")) {
+          gameLevel.spawn("#", obj.gridPos.sub(0, 1));
+          destroy(obj);
+          gameLevel.spawn("}", obj.gridPos);
+        }
       });
 
-      scene("lose", ({ score }: any) => {
-        // Reference to global origin function to avoid window.origin conflict
-        const originFn = (globalThis as any).origin;
-        add([
-          text(`Score: ${score}`, 32),
-          originFn("center"),
-          pos(width() / 2, height() / 2),
-        ]);
+      player.collides("coin", (c: any) => {
+        destroy(c);
+        scoreLabel.value++;
+        scoreLabel.text = scoreLabel.value;
       });
+
+      player.collides("mushroom", (m: any) => {
+        destroy(m);
+        player.biggify(6);
+      });
+
+      player.collides("dangerous", (d: any) => {
+        isJumping ? destroy(d) : go("lose", { score: scoreLabel.value });
+      });
+
+      // Track keyboard input state
+      let moveDir = 0;
+      let keyLeft = false;
+      let keyRight = false;
+      let keyA = false;
+      let keyD = false;
+
+      // Arrow key controls for PC
+      keyDown("left", () => {
+        keyLeft = true;
+        moveDir = -1;
+      });
+      keyDown("right", () => {
+        keyRight = true;
+        moveDir = 1;
+      });
+      keyDown("a", () => {
+        keyA = true;
+        moveDir = -1;
+      });
+      keyDown("d", () => {
+        keyD = true;
+        moveDir = 1;
+      });
+
+      // Track key releases using window events (kaboom doesn't have keyUp)
+      const updateMoveDir = () => {
+        if (keyLeft || keyA) {
+          moveDir = -1;
+        } else if (keyRight || keyD) {
+          moveDir = 1;
+        } else {
+          moveDir = 0;
+        }
+      };
+
+      const handleKeyUp = (e: KeyboardEvent) => {
+        if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+          keyLeft = false;
+          keyA = false;
+          updateMoveDir();
+        }
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+          keyRight = false;
+          keyD = false;
+          updateMoveDir();
+        }
+      };
+
+      keyUpHandler = handleKeyUp;
+      window.addEventListener("keyup", handleKeyUp);
+
+      // Jump controls
+      keyDown("up", () => {
+        if (player.grounded()) {
+          player.jump(CURRENT_JUMP_FORCE);
+        }
+      });
+      keyPress("space", () => {
+        if (player.grounded()) player.jump(CURRENT_JUMP_FORCE);
+      });
+
+      // Pipe interaction - automatic progression when on top
+      let isOnPipe = false;
+      let hasProgressed = false;
+      let progressTimer = 0;
+
+      // Track when player is on pipe
+      player.collides("pipe", () => {
+        isOnPipe = true;
+      });
+
+      // Main player action
+      player.action(() => {
+        // Move based on keyboard input
+        if (moveDir !== 0) {
+          player.move(moveDir * MOVE_SPEED, 0);
+        }
+
+        camPos(player.pos.add(vec2(40, -10)));
+        isJumping = !player.grounded();
+
+        if (player.pos.y >= FALL_DEATH) {
+          go("lose", { score: scoreLabel.value });
+        }
+
+        // Automatic progression when standing on pipe
+        if (isOnPipe && player.grounded() && !hasProgressed) {
+          hasProgressed = true;
+          progressTimer = 0.5;
+        }
+
+        // Handle progression timer
+        if (progressTimer > 0) {
+          progressTimer -= dt();
+          if (progressTimer <= 0) {
+            const nextLevel = level + 1;
+            if (nextLevel >= maps.length) {
+              go("win", { score: scoreLabel.value });
+            } else {
+              go("game", { level: nextLevel, score: scoreLabel.value });
+            }
+          }
+        }
+
+        // Reset pipe flag
+        isOnPipe = false; // Reset each frame, will be set if colliding
+      });
+    });
+
+    scene("lose", ({ score }: any) => {
+      // Reference to global origin function to avoid window.origin conflict
+      const originFn = (globalThis as any).origin;
+      add([
+        text(`Score: ${score}`, 32),
+        originFn("center"),
+        pos(width() / 2, height() / 2),
+      ]);
+    });
+
+    scene("win", ({ score }: any) => {
+      // Reference to global origin function to avoid window.origin conflict
+      const originFn = (globalThis as any).origin;
+      add([
+        text(`You Win! Final Score: ${score}`, 32),
+        originFn("center"),
+        pos(width() / 2, height() / 2),
+      ]);
+      // Optional: Add restart key
+      keyPress("space", () => go("game", { level: 0, score: 0 }));
+    });
 
     start("game", { level: 0, score: 0 });
     return () => {
@@ -475,5 +486,3 @@ const GameSandbox = () => {
 };
 
 export default GameSandbox;
-
-
