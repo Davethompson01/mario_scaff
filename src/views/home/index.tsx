@@ -87,6 +87,24 @@ const GameSandbox = () => {
     el.tabIndex = 0;
     el.focus();
 
+    // Global variables for touch controls
+    let keyLeft = false;
+    let keyRight = false;
+    let keyA = false;
+    let keyD = false;
+    let moveDir = 0;
+    let jumpRequested = false;
+
+    const updateMoveDir = () => {
+      if (keyLeft || keyA) {
+        moveDir = -1;
+      } else if (keyRight || keyD) {
+        moveDir = 1;
+      } else {
+        moveDir = 0;
+      }
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
@@ -96,6 +114,34 @@ const GameSandbox = () => {
     };
 
     el.addEventListener("keydown", handleKeyDown);
+
+    // Add touch controls for mobile
+    el.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const x = e.touches[0].clientX - rect.left;
+      const width = rect.width;
+      if (x < width / 3) {
+        // Left third - move left
+        keyLeft = true;
+        updateMoveDir();
+      } else if (x > 2 * width / 3) {
+        // Right third - move right
+        keyRight = true;
+        updateMoveDir();
+      } else {
+        // Center - jump
+        jumpRequested = true;
+      }
+    });
+
+    el.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      // Reset movement
+      keyLeft = false;
+      keyRight = false;
+      updateMoveDir();
+    });
 
     // Store keyup handler reference for cleanup
     let keyUpHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -338,42 +384,26 @@ const GameSandbox = () => {
         isJumping ? destroy(d) : go("lose", { score: scoreLabel.value });
       });
 
-      // Track keyboard input state
-      let moveDir = 0;
-      let keyLeft = false;
-      let keyRight = false;
-      let keyA = false;
-      let keyD = false;
-
+      // Track keyboard input state (shared with touch)
       // Arrow key controls for PC
       keyDown("left", () => {
         keyLeft = true;
-        moveDir = -1;
+        updateMoveDir();
       });
       keyDown("right", () => {
         keyRight = true;
-        moveDir = 1;
+        updateMoveDir();
       });
       keyDown("a", () => {
         keyA = true;
-        moveDir = -1;
+        updateMoveDir();
       });
       keyDown("d", () => {
         keyD = true;
-        moveDir = 1;
+        updateMoveDir();
       });
 
       // Track key releases using window events (kaboom doesn't have keyUp)
-      const updateMoveDir = () => {
-        if (keyLeft || keyA) {
-          moveDir = -1;
-        } else if (keyRight || keyD) {
-          moveDir = 1;
-        } else {
-          moveDir = 0;
-        }
-      };
-
       const handleKeyUp = (e: KeyboardEvent) => {
         if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
           keyLeft = false;
@@ -412,6 +442,12 @@ const GameSandbox = () => {
 
       // Main player action
       player.action(() => {
+        // Handle touch jump
+        if (jumpRequested) {
+          if (player.grounded()) player.jump(CURRENT_JUMP_FORCE);
+          jumpRequested = false;
+        }
+
         // Move based on keyboard input
         if (moveDir !== 0) {
           player.move(moveDir * MOVE_SPEED, 0);
