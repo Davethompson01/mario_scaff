@@ -94,6 +94,9 @@ const GameSandbox = () => {
     let keyD = false;
     let moveDir = 0;
     let jumpRequested = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let moveTimer: number | null = null;
 
     const updateMoveDir = () => {
       if (keyLeft || keyA) {
@@ -115,32 +118,55 @@ const GameSandbox = () => {
 
     el.addEventListener("keydown", handleKeyDown);
 
-    // Add touch controls for mobile
+    // Add touch controls for mobile - swipe based
     el.addEventListener("touchstart", (e) => {
       e.preventDefault();
-      const rect = el.getBoundingClientRect();
-      const x = e.touches[0].clientX - rect.left;
-      const width = rect.width;
-      if (x < width / 3) {
-        // Left third - move left
-        keyLeft = true;
-        updateMoveDir();
-      } else if (x > (2 * width) / 3) {
-        // Right third - move right
-        keyRight = true;
-        updateMoveDir();
-      } else {
-        // Center - jump
-        jumpRequested = true;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      if (moveTimer) {
+        clearTimeout(moveTimer);
+        moveTimer = null;
       }
     });
 
     el.addEventListener("touchend", (e) => {
       e.preventDefault();
-      // Reset movement
-      keyLeft = false;
-      keyRight = false;
-      updateMoveDir();
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+      const minSwipeDistance = 50;
+
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe
+        if (Math.abs(deltaX) > minSwipeDistance) {
+          if (deltaX > 0) {
+            // Swipe right - move right
+            keyRight = true;
+            updateMoveDir();
+            moveTimer = window.setTimeout(() => {
+              keyRight = false;
+              updateMoveDir();
+              moveTimer = null;
+            }, 300);
+          } else {
+            // Swipe left - move left
+            keyLeft = true;
+            updateMoveDir();
+            moveTimer = window.setTimeout(() => {
+              keyLeft = false;
+              updateMoveDir();
+              moveTimer = null;
+            }, 300);
+          }
+        }
+      } else {
+        // Vertical swipe
+        if (Math.abs(deltaY) > minSwipeDistance && deltaY < 0) {
+          // Swipe up - jump
+          jumpRequested = true;
+        }
+      }
     });
 
     // Store keyup handler reference for cleanup
@@ -514,6 +540,9 @@ const GameSandbox = () => {
       }
       if (keyUpHandler) {
         window.removeEventListener("keyup", keyUpHandler);
+      }
+      if (moveTimer) {
+        clearTimeout(moveTimer);
       }
     };
   }, []);
